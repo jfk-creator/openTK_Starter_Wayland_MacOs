@@ -12,6 +12,7 @@ public class Window : GameWindow
 {
     private Matrix4 _projectionMatrix;
     public Action<Matrix4>? OnDraw { get; set; }
+    public Action<KeyboardState, double>? OnUpdate { get; set; }
 
     public Window(GameWindowSettings gameWindowSettings, NativeWindowSettings nativeWindowSettings)
         : base(gameWindowSettings, nativeWindowSettings) { }
@@ -20,6 +21,10 @@ public class Window : GameWindow
     {
         base.OnLoad();
         GL.ClearColor(0.1f, 0.1f, 0.15f, 1.0f); // Darker background
+
+        GL.Enable(EnableCap.Multisample);
+
+        VSync = VSyncMode.On;
 
         // Initialize our new Renderer API
         Renderer2D.Init();
@@ -49,6 +54,7 @@ public class Window : GameWindow
     {
         base.OnUpdateFrame(e);
         if (KeyboardState.IsKeyDown(Keys.Escape)) { Close(); }
+        OnUpdate?.Invoke(KeyboardState, e.Time);
     }
 
     protected override void OnUnload()
