@@ -3,7 +3,6 @@ using OpenTK.Mathematics;
 using OpenTK.Windowing.Common;
 using OpenTK.Windowing.Desktop;
 using OpenTK.Windowing.GraphicsLibraryFramework;
-using OpenTK.Windowing.GraphicsLibraryFramework;
 
 namespace OpenTKRectangle;
 
@@ -25,25 +24,14 @@ public static class Program
             NumberOfSamples = 4, // MSAA
         };
 
-        Vector2 v = new Vector2(0, 0);
-        Vector2 p = new Vector2(200, 200);
-
-        var gameWindowSettings = new GameWindowSettings()
-        {
-            UpdateFrequency = 0.0
-            APIVersion = new Version(3, 3),
-            NumberOfSamples = 4, // MSAA
-        };
-
-        Vector2 v = new Vector2(0, 0);
-        Vector2 p = new Vector2(200, 200);
-
         var gameWindowSettings = new GameWindowSettings()
         {
             UpdateFrequency = 0.0
         };
 
-        using (var window = new Window(gameWindowSettings, nativeWindowSettings))
+        Vector2 v = new Vector2(0, 0);
+        Vector2 p = new Vector2(200, 200);
+
         using (var window = new Window(gameWindowSettings, nativeWindowSettings))
         {
 
@@ -81,9 +69,8 @@ public static class Program
             window.OnDraw = (projectionMatrix) =>
             {
                 Renderer2D.BeginScene(projectionMatrix);
-                Renderer2D.DrawCircleOutline(p, 60, Color4.White);
 
-                Renderer2D.DrawQuad(p, new Vector2(100f, 100f), Color4.LimeGreen);
+                Renderer2D.DrawCircleOutline(p, 60, Color4.White);
 
                 Renderer2D.EndScene();
             };
