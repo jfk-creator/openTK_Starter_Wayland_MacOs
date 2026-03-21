@@ -5,7 +5,7 @@ using OpenTK.Windowing.Desktop;
 using OpenTK.Windowing.GraphicsLibraryFramework;
 
 
-namespace OpenTKRectangle;
+namespace Game;
 
 
 public class Window : GameWindow

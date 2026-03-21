@@ -3,7 +3,7 @@ using System.IO;
 using OpenTK.Graphics.OpenGL4;
 using OpenTK.Mathematics;
 
-namespace OpenTKRectangle;
+namespace Game;
 
 public class Shader : IDisposable
 {
