@@ -70,7 +70,12 @@ public static class Program
             {
                 Renderer2D.BeginScene(projectionMatrix);
 
-                Renderer2D.DrawCircleOutline(p, 60, Color4.White);
+                Renderer2D.DrawTriangle(
+                        p, 
+                        new Vector2(20,20), 
+                        MathHelper.DegreesToRadians(-45-180), 
+                        Color4.White
+                        );
 
                 Renderer2D.EndScene();
             };

@@ -7,10 +7,17 @@ namespace OpenTKRectangle;
 
 public static class Renderer2D
 {
-    private static int _vertexArrayObject;
-    private static int _vertexBufferObject;
-    private static int _elementBufferObject;
+        
     private static Shader _shader = null!;
+
+    // --- Triangle Buffer ---
+    private static int _triangleVertexArrayObject;
+    private static int _triangleVertexBufferObject;
+
+    // --- Quad Buffer ---
+    private static int _quadVertexArrayObject;
+    private static int _quadVertexBufferObject;
+    private static int _quadElementArrayBufferObject;
 
     // --- Circle Buffers ---
     private static int _circleVertexArrayObject;
@@ -23,37 +30,62 @@ public static class Renderer2D
     private static int _circleOutlineVertexBufferObject;
     private static int _circleOutlineVertexCount;
 
-    // A 1x1 square
-    private static readonly float[] _vertices = {
-         0.5f,  0.5f, 0.0f,
-         0.5f, -0.5f, 0.0f,
-        -0.5f, -0.5f, 0.0f,
-        -0.5f,  0.5f, 0.0f
-    };
-
-    private static readonly uint[] _indices = { 0, 1, 3, 1, 2, 3 };
 
     public static void Init()
     {
+
+        _shader = new Shader("Shaders/shader.vert", "Shaders/shader.frag");
+
+        InitTriangle();
         InitQuad();
         InitCircle();
         InitCircleOutline();
     }
 
-    private static void InitQuad()
+    private static void InitTriangle()
     {
-        _vertexArrayObject = GL.GenVertexArray();
-        GL.BindVertexArray(_vertexArrayObject);
+        float[] _vertices = {
+            0.5f,  0.5f, 0.0f,
+            0.5f, -0.5f, 0.0f,
+            -0.5f, -0.5f, 0.0f,
+        };
 
-        _vertexBufferObject = GL.GenBuffer();
-        GL.BindBuffer(BufferTarget.ArrayBuffer, _vertexBufferObject);
+        _triangleVertexArrayObject = GL.GenVertexArray();
+        GL.BindVertexArray(_triangleVertexArrayObject);
+
+        _triangleVertexBufferObject = GL.GenBuffer();
+        GL.BindBuffer(BufferTarget.ArrayBuffer, _triangleVertexBufferObject);
         GL.BufferData(BufferTarget.ArrayBuffer, _vertices.Length * sizeof(float), _vertices, BufferUsageHint.StaticDraw);
 
-        _elementBufferObject = GL.GenBuffer();
-        GL.BindBuffer(BufferTarget.ElementArrayBuffer, _elementBufferObject);
-        GL.BufferData(BufferTarget.ElementArrayBuffer, _indices.Length * sizeof(uint), _indices, BufferUsageHint.StaticDraw);
 
-        _shader = new Shader("Shaders/shader.vert", "Shaders/shader.frag");
+        int vertexLocation = GL.GetAttribLocation(_shader.Handle, "aPosition");
+        GL.EnableVertexAttribArray(vertexLocation);
+        GL.VertexAttribPointer(vertexLocation, 3, VertexAttribPointerType.Float, false, 3 * sizeof(float), 0);
+
+    }
+
+    private static void InitQuad()
+    {
+        // A 1x1 square
+        float[] _vertices = {
+            0.5f,  0.5f, 0.0f,
+            0.5f, -0.5f, 0.0f,
+            -0.5f, -0.5f, 0.0f,
+            -0.5f,  0.5f, 0.0f
+        };
+
+        uint[] _indices = { 0, 1, 3, 1, 2, 3 };
+
+        _quadVertexArrayObject = GL.GenVertexArray();
+        GL.BindVertexArray(_quadVertexArrayObject);
+
+        _quadVertexBufferObject = GL.GenBuffer();
+        GL.BindBuffer(BufferTarget.ArrayBuffer, _quadVertexBufferObject);
+        GL.BufferData(BufferTarget.ArrayBuffer, _vertices.Length * sizeof(float), _vertices, BufferUsageHint.StaticDraw);
+
+        _quadElementArrayBufferObject = GL.GenBuffer();
+        GL.BindBuffer(BufferTarget.ElementArrayBuffer, _quadElementArrayBufferObject);
+        GL.BufferData(BufferTarget.ElementArrayBuffer, _indices.Length * sizeof(float), _indices, BufferUsageHint.StaticDraw);
 
         int vertexLocation = GL.GetAttribLocation(_shader.Handle, "aPosition");
         GL.EnableVertexAttribArray(vertexLocation);
@@ -81,7 +113,11 @@ public static class Renderer2D
 
         _circleVertexBufferObject = GL.GenBuffer();
         GL.BindBuffer(BufferTarget.ArrayBuffer, _circleVertexBufferObject);
-        GL.BufferData(BufferTarget.ArrayBuffer, circleVertices.Count * sizeof(float), circleVertices.ToArray(), BufferUsageHint.StaticDraw);
+        GL.BufferData(
+                BufferTarget.ArrayBuffer,
+                circleVertices.Count * sizeof(float),
+                circleVertices.ToArray(),
+                BufferUsageHint.StaticDraw);
 
         int vertexLocation = GL.GetAttribLocation(_shader.Handle, "aPosition");
         GL.EnableVertexAttribArray(vertexLocation);
@@ -105,7 +141,11 @@ public static class Renderer2D
         GL.BindVertexArray(_circleOutlineVertexArrayObject);
         _circleOutlineVertexBufferObject = GL.GenBuffer();
         GL.BindBuffer(BufferTarget.ArrayBuffer, _circleOutlineVertexBufferObject);
-        GL.BufferData(BufferTarget.ArrayBuffer, outlineVertices.Count * sizeof(float), outlineVertices.ToArray(), BufferUsageHint.StaticDraw);
+        GL.BufferData(
+                BufferTarget.ArrayBuffer,
+                outlineVertices.Count * sizeof(float),
+                outlineVertices.ToArray(),
+                BufferUsageHint.StaticDraw);
 
         int vertexLocation = GL.GetAttribLocation(_shader.Handle, "aPosition");
         GL.EnableVertexAttribArray(vertexLocation);
@@ -119,6 +159,34 @@ public static class Renderer2D
         _shader.SetMatrix4("projection", projectionMatrix);
     }
 
+    public static void DrawTriangle(Vector2 position, Vector2 size, Color4 color) 
+    {
+        Matrix4 scale = Matrix4.CreateScale(size.X, size.Y, 1.0f);
+        Matrix4 translation = Matrix4.CreateTranslation(position.X, position.Y, 0.0f);
+        Matrix4 model = scale * translation;
+
+        _shader.SetMatrix4("model", model);
+        _shader.SetColor4("color", color);
+
+        GL.BindVertexArray(_triangleVertexArrayObject);
+        GL.DrawArrays(PrimitiveType.Triangles, 0, 3);
+    }
+
+
+    public static void DrawTriangle(Vector2 position, Vector2 size, float rotation, Color4 color) 
+    {
+        Matrix4 scale = Matrix4.CreateScale(size.X, size.Y, 1.0f);
+        Matrix4 rot = Matrix4.CreateRotationZ(rotation);
+        Matrix4 translation = Matrix4.CreateTranslation(position.X, position.Y, 0.0f);
+        Matrix4 model = scale * rot * translation;
+
+        _shader.SetMatrix4("model", model);
+        _shader.SetColor4("color", color);
+
+        GL.BindVertexArray(_triangleVertexArrayObject);
+        GL.DrawArrays(PrimitiveType.Triangles, 0, 3);
+    }
+
     public static void DrawQuad(Vector2 position, Vector2 size, Color4 color)
     {
         Matrix4 scale = Matrix4.CreateScale(size.X, size.Y, 1.0f);
@@ -128,8 +196,23 @@ public static class Renderer2D
         _shader.SetMatrix4("model", model);
         _shader.SetColor4("color", color);
 
-        GL.BindVertexArray(_vertexArrayObject);
-        GL.DrawElements(PrimitiveType.Triangles, _indices.Length, DrawElementsType.UnsignedInt, 0);
+        GL.BindVertexArray(_quadVertexArrayObject);
+        GL.DrawElements(PrimitiveType.Triangles, 6, DrawElementsType.UnsignedInt, 0);
+    }
+
+
+    public static void DrawQuad(Vector2 position, Vector2 size, float rotation, Color4 color)
+    {
+        Matrix4 scale = Matrix4.CreateScale(size.X, size.Y, 1.0f);
+        Matrix4 rot = Matrix4.CreateRotationZ(rotation);
+        Matrix4 translation = Matrix4.CreateTranslation(position.X, position.Y, 0.0f);
+        Matrix4 model = scale * rot * translation;
+
+        _shader.SetMatrix4("model", model);
+        _shader.SetColor4("color", color);
+
+        GL.BindVertexArray(_quadVertexArrayObject);
+        GL.DrawElements(PrimitiveType.Triangles, 6, DrawElementsType.UnsignedInt, 0);
     }
 
     public static void DrawQuadOutline(Vector2 position, Vector2 size, Color4 color)
@@ -141,19 +224,23 @@ public static class Renderer2D
         _shader.SetMatrix4("model", model);
         _shader.SetColor4("color", color);
 
-        GL.BindVertexArray(_vertexArrayObject);
+        GL.BindVertexArray(_quadVertexArrayObject);
         GL.DrawArrays(PrimitiveType.LineLoop, 0, 4);
     }
 
-    public static void DrawQuadOutline(Vector2 position, Vector2 size, float thickness, Color4 color)
-    {
-        float halfWidth = size.X / 2.0f;
-        float halfHeight = size.Y / 2.0f;
 
-        DrawQuad(new Vector2(position.X, position.Y + halfHeight), new Vector2(size.X + thickness, thickness), color);
-        DrawQuad(new Vector2(position.X, position.Y - halfHeight), new Vector2(size.X + thickness, thickness), color);
-        DrawQuad(new Vector2(position.X - halfWidth, position.Y), new Vector2(thickness, size.Y - thickness), color);
-        DrawQuad(new Vector2(position.X + halfWidth, position.Y), new Vector2(thickness, size.Y - thickness), color);
+    public static void DrawQuadOutline(Vector2 position, Vector2 size, float rotation, Color4 color)
+    {
+        Matrix4 scale = Matrix4.CreateScale(size.X, size.Y, 1.0f);
+        Matrix4 rot = Matrix4.CreateRotationZ(rotation);
+        Matrix4 translation = Matrix4.CreateTranslation(position.X, position.Y, 0.0f);
+        Matrix4 model = scale * rot * translation;
+
+        _shader.SetMatrix4("model", model);
+        _shader.SetColor4("color", color);
+
+        GL.BindVertexArray(_quadVertexArrayObject);
+        GL.DrawArrays(PrimitiveType.LineLoop, 0, 4);
     }
 
     public static void DrawCircle(Vector2 position, float radius, Color4 color)
@@ -161,6 +248,21 @@ public static class Renderer2D
         Matrix4 scale = Matrix4.CreateScale(radius, radius, 1.0f);
         Matrix4 translation = Matrix4.CreateTranslation(position.X, position.Y, 0.0f);
         Matrix4 model = scale * translation;
+
+        _shader.SetMatrix4("model", model);
+        _shader.SetColor4("color", color);
+
+        GL.BindVertexArray(_circleVertexArrayObject);
+        GL.DrawArrays(PrimitiveType.Triangles, 0, _circleVertexCount);
+    }
+
+
+    public static void DrawCircle(Vector2 position, float radius, float rotation, Color4 color)
+    {
+        Matrix4 scale = Matrix4.CreateScale(radius, radius, 1.0f);
+        Matrix4 rot = Matrix4.CreateRotationZ(rotation);
+        Matrix4 translation = Matrix4.CreateTranslation(position.X, position.Y, 0.0f);
+        Matrix4 model = scale * rot * translation;
 
         _shader.SetMatrix4("model", model);
         _shader.SetColor4("color", color);
@@ -193,14 +295,16 @@ public static class Renderer2D
     // Call this when the application closes
     public static void Shutdown()
     {
-        // Cleanup Quad
-        GL.DeleteBuffer(_vertexBufferObject);
-        GL.DeleteBuffer(_elementBufferObject);
-        GL.DeleteVertexArray(_vertexArrayObject);
+        GL.DeleteBuffer(_triangleVertexBufferObject);
+        GL.DeleteVertexArray(_triangleVertexArrayObject);
 
-        // Cleanup Circle
+        GL.DeleteBuffer(_quadVertexBufferObject);
+        GL.DeleteBuffer(_quadElementArrayBufferObject);
+        GL.DeleteVertexArray(_quadVertexArrayObject);
+
         GL.DeleteBuffer(_circleVertexBufferObject);
         GL.DeleteVertexArray(_circleVertexArrayObject);
+
         GL.DeleteBuffer(_circleOutlineVertexBufferObject);
         GL.DeleteVertexArray(_circleOutlineVertexArrayObject);
 
