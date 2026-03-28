@@ -29,57 +29,86 @@ public static class Program
             UpdateFrequency = 0.0
         };
 
-        Vector2 v = new Vector2(0, 0);
-        Vector2 p = new Vector2(200, 200);
-
         using (var window = new Window(gameWindowSettings, nativeWindowSettings))
         {
+            Vector2 frameSize = window.FramebufferSize;
+            Player p1 = new(new Vector2(frameSize.X / 2, 75), new Vector2(200, 50), Color4.DarkCyan);
+            Ball ball = new(new Vector2(frameSize.X / 2, frameSize.Y / 2 - 200), new Vector2(50, 50), Color4.DeepPink);
+            Block[] blocks = new Block[9];
+
+            for (int i = 0; i < blocks.Length; ++i)
+            {
+                float width = frameSize.X / (blocks.Length * 2);
+                float gap = 75;
+                Vector2 startingPos = new(width * (i + 1) + (gap * i + 1), frameSize.Y - 100);
+                Vector2 size = new(100, 50);
+                blocks[i] = new Block(startingPos, size, Color4.OrangeRed);
+            }
 
             window.OnUpdate = (keyboard, deltaTime) =>
             {
-                Vector2 a = new Vector2(0, 0);
-                float acc = 1f;
-                //Input Logic
-                if (keyboard.IsKeyDown(Keys.Right)) a.X += acc;
-                if (keyboard.IsKeyDown(Keys.Left)) a.X -= acc;
-                if (keyboard.IsKeyDown(Keys.Up)) a.Y += acc;
-                if (keyboard.IsKeyDown(Keys.Down)) a.Y -= acc;
+                p1.Update(keyboard, (float)deltaTime, window.FramebufferSize);
+                ball.Update(frameSize, (float)deltaTime);
+                CheckCollision(ball, p1);
 
-                v += a * (float)deltaTime;
-                p += v;
+                for (int i = 0; i < blocks.Length; ++i)
+                {
+                    CheckCollision(ball, blocks[i]);
+                }
             };
-
-
-
-            window.OnUpdate = (keyboard, deltaTime) =>
-            {
-                Vector2 a = new Vector2(0, 0);
-                float acc = 1f;
-                //Input Logic
-                if (keyboard.IsKeyDown(Keys.Right)) a.X += acc;
-                if (keyboard.IsKeyDown(Keys.Left)) a.X -= acc;
-                if (keyboard.IsKeyDown(Keys.Up)) a.Y += acc;
-                if (keyboard.IsKeyDown(Keys.Down)) a.Y -= acc;
-
-                v += a * (float)deltaTime;
-                p += v;
-            };
-
 
             window.OnDraw = (projectionMatrix) =>
             {
                 Renderer2D.BeginScene(projectionMatrix);
 
-                Renderer2D.DrawTriangle(
-                        p, 
-                        new Vector2(20,20), 
-                        MathHelper.DegreesToRadians(-45-180), 
-                        Color4.White
-                        );
+                p1.Render();
 
+                for (int i = 0; i < blocks.Length; ++i)
+                {
+                    blocks[i].Render();
+                }
+
+                ball.Render();
                 Renderer2D.EndScene();
             };
             window.Run();
         }
+    }
+
+    static void CheckCollision(Ball ball, Block block)
+    {
+        float ballYUp = ball.position.Y + (ball.size.Y / 2);
+        float ballYDown = ball.position.Y - (ball.size.Y / 2);
+
+
+        float ballXLeft = ball.position.X + (ball.size.X / 2);
+        float ballXRight = ball.position.X - (ball.size.X / 2);
+
+        float blockYUp = block.position.Y + (block.size.Y / 2);
+        float blockYDown = block.position.Y - (block.size.Y / 2);
+
+        float blockXLeft = block.position.X + (block.size.X / 2);
+        float blockXRight = block.position.X - (block.size.X / 2);
+
+        if (ballXLeft < blockXLeft && ballXLeft > blockXRight || ballXRight < blockXLeft && ballXRight > blockXRight)
+        {
+
+            //Y Up
+            if (ballYUp > blockYUp && ballYDown < blockYUp && ball.vel.Y < 0 && block.alive)
+            {
+                ball.HitY();
+                block.Hit();
+            }
+
+            //Y Down
+            if (ballYUp > blockYDown && ballYDown < blockYDown && ball.vel.Y > 0 && block.alive)
+            {
+                ball.HitY();
+                block.Hit();
+            }
+
+        }
+
+
     }
 }
